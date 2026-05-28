@@ -26,7 +26,7 @@
 
         <div class="hero-v2-actions">
             <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
-            <a href="#features" class="btn-primary">See how it works</a>
+            <button class="btn-primary" id="how-it-works-btn">See how it works</button>
         </div>
 
         <div class="hero-v2-dashboard">
@@ -101,4 +101,54 @@
     </div>
 </section>
 
+<!-- Video modal -->
+<div id="video-modal" class="video-modal-overlay" role="dialog" aria-modal="true" aria-label="How it works video">
+    <div class="video-modal-box">
+        <button id="video-modal-close" class="video-modal-close" aria-label="Close">&times;</button>
+        <div class="video-modal-embed">
+            <iframe
+                id="video-modal-iframe"
+                data-src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+                src=""
+                frameborder="0"
+                allow="autoplay; encrypted-media"
+                allowfullscreen
+            ></iframe>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var btn      = document.getElementById('how-it-works-btn');
+    var overlay  = document.getElementById('video-modal');
+    var closeBtn = document.getElementById('video-modal-close');
+    var iframe   = document.getElementById('video-modal-iframe');
+    var src      = iframe.dataset.src;
+
+    function openModal() {
+        iframe.src = src;
+        overlay.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        overlay.classList.remove('is-open');
+        iframe.src = '';
+        document.body.style.overflow = '';
+    }
+
+    btn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closeModal();
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeModal();
+    });
+}());
+</script>
 {% endblock %}
