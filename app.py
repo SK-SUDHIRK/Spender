@@ -1,7 +1,11 @@
-from flask import Flask, render_template
-from database.db import get_db, init_db, seed_db
+import secrets
+from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
+from werkzeug.security import generate_password_hash
+from database.db import get_db, init_db, seed_db, get_user_by_email, create_user
 
 app = Flask(__name__)
+# TODO: replace with os.environ value before production
+app.secret_key = 'dev-spendly-secret-key-change-in-prod'
 
 with app.app_context():
     init_db()
@@ -27,9 +31,35 @@ def privacy():
     return render_template("privacy.html")
 
 
-@app.route("/register")
+@app.route("/register", methods=['GET', 'POST'])
 def register():
-    return render_template("register.html")
+    if request.method == 'POST':
+        if request.form.get('csrf_token') != session.get('csrf_token'):
+            abort(400)
+
+        name     = request.form.get('name', '').strip()
+        email    = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        confirm  = request.form.get('confirm_password', '')
+
+        if not all([name, email, password, confirm]):
+            flash('All fields are required.')
+            return render_template('register.html', csrf_token=session['csrf_token'])
+
+        if password != confirm:
+            flash('Passwords do not match.')
+            return render_template('register.html', csrf_token=session['csrf_token'])
+
+        if get_user_by_email(email):
+            flash('An account with that email already exists.')
+            return render_template('register.html', csrf_token=session['csrf_token'])
+
+        create_user(name, email, generate_password_hash(password))
+        return redirect(url_for('login'))
+
+    csrf_token = secrets.token_hex(16)
+    session['csrf_token'] = csrf_token
+    return render_template('register.html', csrf_token=csrf_token)
 
 
 @app.route("/login")
